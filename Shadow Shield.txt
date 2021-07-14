@@ -1,0 +1,134 @@
+import openmc
+import os
+
+
+# MATERIALS
+mats = openmc.Materials()
+
+SS316 = openmc.Material(name='Stainless_Steel')
+SS316.add_element('Ni',0.12)
+SS316.add_element('Cr',0.17)
+SS316.add_element('Mo',0.025)
+SS316.add_element('Fe',0.65345)
+SS316.add_element('Si',0.01)
+SS316.add_element('Mn',0.02)
+SS316.add_element('C',0.0008)
+SS316.add_element('P',0.00045)
+SS316.add_element('S',0.0003)
+SS316.set_density('g/cm3',8.09)
+mats.append(SS316)
+
+B4C = openmc.Material(name='Boron_carbide')
+B4C.add_element('B',4)
+B4C.add_element('C',1)
+B4C.set_density('g/cm3',2.52)
+mats.append(B4C)
+
+Be = openmc.Material(name='Beryllium')
+Be.add_element('Be',1)
+Be.set_density('g/cm3',1.85)
+mats.append(Be)
+
+W = openmc.Material(name='Tungsten')
+W.add_element('W',1)
+W.set_density('g/cm3',19.3)
+mats.append(W)
+
+LiH = openmc.Material(name='Lithium_hydride')
+LiH.add_element('Li',1)
+LiH.add_element('H',1)
+LiH.set_density('g/cm3',0.78)
+mats.append(LiH)
+
+mats.export_to_xml()
+
+# GEOMETRY
+Shield_Surf_1 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=154.88)
+Shield_Surf_2 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=156.38)
+Shield_Surf_3 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=157.38)
+Shield_Surf_4 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=157.88)
+Shield_Surf_5 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=162.88)
+Shield_Surf_6 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=163.38)
+Shield_Surf_7 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=168.38)
+Shield_Surf_8 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=168.88)
+Shield_Surf_9 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=173.88)
+Shield_Surf_10 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=175.63)
+Shield_Surf_11 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=232.38) #113
+Shield_Surf_12 = openmc.Sphere(x0=0.0, y0=0.0, z0=118.8, r=234.88) #118.8
+Cone_Surf_1 = openmc.ZCone(x0=0.0, y0=0.0, z0=5.8, r2=0.268)# 0
+Cone_Surf_2 = openmc.ZCone(x0=0.0, y0=0.0, z0=0, r2=0.268)
+surface_zp = openmc.ZPlane(z0=0)
+
+
+
+#Cells
+B4C_C1 = +Shield_Surf_2 & -Shield_Surf_3 & -Cone_Surf_2 & -surface_zp
+Be_C2 = +Shield_Surf_3 & -Shield_Surf_4 & -Cone_Surf_2 & -surface_zp
+B4C_C3 = +Shield_Surf_4 & -Shield_Surf_5 & -Cone_Surf_2 & -surface_zp
+Be_C4 = +Shield_Surf_5 & -Shield_Surf_6 & -Cone_Surf_2 & -surface_zp
+B4C_C5 = +Shield_Surf_6 & -Shield_Surf_7 & -Cone_Surf_2 & -surface_zp
+Be_C6 = +Shield_Surf_7 & -Shield_Surf_8 & -Cone_Surf_2 & -surface_zp
+B4C_C7 = +Shield_Surf_8 & -Shield_Surf_9 & -Cone_Surf_2 & -surface_zp
+W_C8 = +Shield_Surf_9 & -Shield_Surf_10 & -Cone_Surf_2 & -surface_zp
+LiH_C9 = +Shield_Surf_10 & -Shield_Surf_11 & -Cone_Surf_2 & -surface_zp
+Inside_SS_Shell = +Shield_Surf_2 & -Shield_Surf_11 & -Cone_Surf_2 & -surface_zp
+SS_Shell = +Shield_Surf_1 & -Shield_Surf_12 & -Cone_Surf_1 & -surface_zp & ~ Inside_SS_Shell
+
+#Regions
+B4C_C1 = openmc.Cell(region= B4C_C1)
+B4C_C1.Fill = B4C
+
+Be_C2 = openmc.Cell(region= Be_C2)
+Be_C2.Fill = Be
+
+B4C_C3 = openmc.Cell(region= B4C_C3)
+B4C_C3.Fill = B4C
+
+Be_C4 = openmc.Cell(region= Be_C4)
+Be_C4.Fill = Be
+
+B4C_C5 = openmc.Cell(region= B4C_C5)
+B4C_C5.Fill = B4C
+
+Be_C6 = openmc.Cell(region= Be_C6)
+Be_C6.Fill = Be
+
+B4C_C7 = openmc.Cell(region= B4C_C7)
+B4C_C7.Fill = B4C
+
+W_C8 = openmc.Cell(region= W_C8)
+W_C8.Fill = W
+
+LiH_C9 = openmc.Cell(region= LiH_C9)
+LiH_C9.Fill = LiH
+
+Inside_SS_Shell = openmc.Cell(region= Inside_SS_Shell)
+SS_Shell = openmc.Cell(region= SS_Shell)
+SS_Shell.Fill = SS316
+
+
+universe = openmc.Universe(cells=[B4C_C1, Be_C2, B4C_C3, Be_C4, B4C_C5, Be_C6, B4C_C7, W_C8, LiH_C9, Inside_SS_Shell, SS_Shell])
+geom = openmc.Geometry(universe)
+geom.export_to_xml()
+sett = openmc.Settings()
+sett.export_to_xml()
+
+# makes the 3d "cube" style geometry
+vox_plot = openmc.Plot()
+vox_plot.type = 'voxel'
+vox_plot.width = (200, 200, 450)
+vox_plot.pixels = (100, 100, 225)
+vox_plot.filename = 'plot_3d_shadow_shield_1'
+#vox_plot.color_by = 'density'
+#vox_plot.colors = {LiH: 'green'}
+#vox_plot.colors = {B4C: 'red'}
+#vox_plot.colors = {W: 'yellow'}
+#vox_plot.colors = {Be: 'blue'}
+# materials can be coloured using this command
+plots = openmc.Plots([vox_plot])
+plots.export_to_xml()
+openmc.plot_geometry()
+
+os.system('openmc-voxel-to-vtk plot_3d_shadow_shield_1.h5 -o plot_3d_shadow_shield_1.vti')
+from IPython.display import FileLink
+display(FileLink('plot_3d_shadow_shield_1.vti'))

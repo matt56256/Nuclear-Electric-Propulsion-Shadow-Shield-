@@ -1,0 +1,208 @@
+import openmc
+
+#Materials 
+
+Na = openmc.Material(name='Sodium')
+Na.add_nuclide('Na23', 1.0)
+Na.set_density('g/cm3', 0.00805) #Vapour at 1300K
+
+
+UN = openmc.Material(name='Uranium_Nitrate')
+UN.add_nuclide('U235',0.97)
+UN.add_nuclide('U238',0.03)
+UN.add_nuclide('N14',0.99636)
+UN.add_nuclide('N14',0.00364)
+UN.set_density('g/cm3',11.3)
+
+He = openmc.Material(name='Helium')
+He.add_element('He',1)
+He.set_density('g/cm3', 0.1785)
+
+Re = openmc.Material(name='Rhenium')
+Re.add_element('Re',1)
+Re.set_density('g/cm3',21.02)
+
+Mo = openmc.Material(name='Molybdenum')
+Mo.add_element('Mo',1)
+Mo.set_density('g/cm3',10.28)
+
+Mo44Re = openmc.Material(name='Molybdenum_Rhenium')
+Mo44Re.add_element('Mo',44)
+Mo44Re.add_element('Re',1)
+Mo44Re.set_density('g/cm3',10.28)
+
+B4C = openmc.Material(name='Boron_carbide')
+B4C.add_element('B',4)
+B4C.add_element('C',1)
+B4C.set_density('g/cm3',2.52 )
+
+Be = openmc.Material(name='Beryllium')
+Be.add_element('Be',1)
+Be.set_density('g/cm3',1.85)
+
+NbZr = openmc.Material(name='Niobium_Zirconium')
+NbZr.add_element('Nb',1)
+NbZr.add_element('Zr',1)
+NbZr.set_density('g/cm3',8.57)
+
+BeO = openmc.Material(name='Beryllium_Oxide')
+BeO.add_element('B',1)
+BeO.add_element('O',1)
+BeO.set_density('g/cm3',3.01)
+
+materials_file = openmc.Materials([Mo, Re, He, Na, UN, Be, NbZr, B4C, BeO, Mo44Re])
+materials_file.export_to_xml()
+
+
+# Geometry definitions
+
+# Heatpipe Surface
+central_void_or = openmc.ZCylinder(r=0.34)
+Mo44Re_wick_ir = openmc.ZCylinder(r=0.391)
+Mo44Re_wick_or = openmc.ZCylinder(r=0.454)
+Mo_wall_or = openmc.ZCylinder(r=0.5525)
+
+#Reflector Pins
+
+RP_wall_ir = openmc.ZCylinder( r=0.4715)
+RP_wall_or = openmc.ZCylinder(r=0.5525)
+
+# Fuel Rod Surface
+
+UN_or_fr = openmc.ZCylinder( r=0.418)
+clad_ir_fr = openmc.ZCylinder( r=0.420) 
+clad_or_fr = openmc.ZCylinder( r=0.471)
+wall_ir_fr = openmc.ZCylinder( r=0.4715)
+wall_or_fr  = openmc.ZCylinder(r=0.5525)
+
+#Tricusp Surface
+
+void_tricusp = openmc.ZCylinder( r=0.5525)
+Mo_surface = openmc.ZCylinder(r=0.8, boundary_type='vacuum')
+
+#Prism surface
+
+outer_in_surface1 = openmc.model.hexagonal_prism(edge_length=28.73)
+outer_in_surface2 = openmc.model.hexagonal_prism(edge_length=29.23)
+
+#Top and Bottom Surface
+top = openmc.ZPlane(z0=+25, boundary_type='vacuum')
+bottom = openmc.ZPlane(z0=-25, boundary_type='vacuum') 
+
+# Heatpipe Regions
+
+central_void_or_region = -central_void_or & -top & +bottom
+Mo44Re_wick_ir_region = -Mo44Re_wick_ir & +central_void_or & -top & +bottom
+Mo44Re_wick_or_region = +Mo44Re_wick_ir & -Mo44Re_wick_or & -top & +bottom
+Mo_wall_or_region = +Mo44Re_wick_ir & -Mo_wall_or & -top & +bottom
+
+# Reflector Pins Regions
+
+RP_BeO_region = -RP_wall_ir & -top & +bottom
+RP_Mo_region = -RP_wall_or & +RP_wall_ir & -top & +bottom
+
+# Fuel Rod Region
+
+fuel_fr_region = -UN_or_fr & -top & +bottom
+gap1_fr_region  = +UN_or_fr & -clad_ir_fr  & -top & +bottom
+clad_fr_region = +clad_ir_fr & -clad_or_fr  & -top & +bottom
+gap2_fr_region = +clad_or_fr & -wall_ir_fr & -top & +bottom
+wall_fr_region = +wall_ir_fr & -wall_or_fr & -top & +bottom
+
+
+# Tricusp Region
+Tricusp_region = +void_tricusp & -top & +bottom
+Mo_region = -Mo_surface & -top & +bottom
+
+# Heatpipe Cell
+
+central_void_or_cell = openmc.Cell(fill=Na, region=central_void_or_region)
+Mo44Re_wick_ir_cell = openmc.Cell(fill=Mo44Re, region=Mo44Re_wick_ir_region)
+Mo44Re_wick_or_cell = openmc.Cell(fill=Na, region=Mo44Re_wick_or_region)
+Mo_wall_or_cell = openmc.Cell(fill=Mo, region=Mo_wall_or_region)
+
+# Reflector Pins Cell
+
+RP_BeO_cell = openmc.Cell(fill=BeO, region=RP_BeO_region)
+RP_Mo_wall_cell = openmc.Cell(fill=Mo, region=RP_Mo_region)
+
+# Fuel Rod Cell
+
+fuel_fr_cell = openmc.Cell(fill=UN, region=fuel_fr_region)
+gap1_fr_cell = openmc.Cell(fill=He, region=gap1_fr_region)
+clad_fr_cell = openmc.Cell(fill=Re, region=clad_fr_region)
+gap2_fr_cell = openmc.Cell(fill=He, region=gap2_fr_region)
+wall_fr_cell = openmc.Cell(fill=Mo, region=wall_fr_region)
+
+
+# Tricusp Cell
+
+Tricusp_cell = openmc.Cell(fill=Mo, region=Tricusp_region)
+Mo_cell = openmc.Cell(fill =Mo, region= Mo_region)
+# universes
+Mo_u = openmc.Universe(cells=[Mo_cell])
+Rp_u = openmc.Universe(cells=(RP_BeO_cell,RP_Mo_wall_cell,Tricusp_cell ))
+hp1_u = openmc.Universe(cells=(central_void_or_cell, Mo44Re_wick_ir_cell, Mo44Re_wick_or_cell, Mo_wall_or_cell,Tricusp_cell))
+Fr1_u = openmc.Universe(cells=(fuel_fr_cell, gap1_fr_cell, clad_fr_cell, gap2_fr_cell, wall_fr_cell,Tricusp_cell))
+
+T_u = openmc.Universe(cells=[Tricusp_cell])
+# Define a lattice for inner assemblies
+in_lat1 = openmc.HexLattice( name='inner assembly')
+in_lat1.center = (0., 0.)
+in_lat1.pitch = (1.105,)
+in_lat1.orientation = 'y'
+in_lat1.outer = T_u
+
+# Create rings of fuel universes that will fill the lattice
+in25 = [Mo_u]*156
+in26 = ([Fr1_u]+[Rp_u])*75
+in27 = ([Fr1_u]+[hp1_u])*72
+in28 = [Fr1_u]*138
+in29 = ([Fr1_u]+[hp1_u])*66
+in30 = [Fr1_u]*126
+in31 = ([Fr1_u]+[hp1_u])*60
+in32 = [Fr1_u]*114
+in33 = ([Fr1_u]+[hp1_u])*54
+in34 = [Fr1_u]*102
+in35 = ([Fr1_u]+[hp1_u])*48
+in36 = [Fr1_u]*90
+in37 = ([Fr1_u]+[hp1_u])*42
+in38 = [Fr1_u]*78
+in39 = ([Fr1_u]+[hp1_u])*36
+in40 = [Fr1_u]*66
+in41 = ([Fr1_u]+[hp1_u])*30
+in42 = [Fr1_u]*54
+in43 = ([Fr1_u]+[hp1_u])*24
+in44 = [Fr1_u]*42
+in45 = ([Fr1_u]+[hp1_u])*18
+in46 = [Fr1_u]*30
+in47 = ([Fr1_u]+[hp1_u])*12
+in48 = [Fr1_u]*18
+in49 = ([Fr1_u]+[hp1_u])*6
+in50 = [Fr1_u]*6
+in51 = [hp1_u]
+
+
+
+in_lat1.universes = [in25,in26,in27,in28,in29,in30,in31,in32,in33,in34,in35,in36,in37,in38,in39,in40,in41,in42,in43,in44,in45,in46,in47,in48,in49,in50,in51]
+# Create the prism that will contain the lattice
+
+
+# Fill a cell with the lattice. This cell is filled with the lattice and contained within the prism.
+main_in_assembly = openmc.Cell( fill=in_lat1, region= outer_in_surface1 & -top & +bottom)
+
+
+outer_in_surface1 = openmc.model.hexagonal_prism(edge_length=28.73)
+outer_in_surface2 = openmc.model.hexagonal_prism(edge_length=29.23)
+
+
+# Fill a cell with a material that will surround the lattice
+out_in_assembly = openmc.Cell( fill=Mo, region= ~outer_in_surface1 & -top & +bottom) 
+#out_in_assmebly2  = openmc.Cell( fill=Na, region= ~outer_in_surface2 & -top & +bottom)
+
+
+# Create a universe that contains both 
+main_in_u = openmc.Universe(cells=[main_in_assembly,out_in_assembly])
+
+
+main_in_u.plot(origin = (0,0,0), pixels=(1200, 1200), width = (3.,3.), color_by = 'material')
